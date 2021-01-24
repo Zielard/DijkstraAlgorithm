@@ -12,20 +12,31 @@ public class Graph {
 
     public Graph() { }
 
-    public void print()
+    public void printNeighbors()
     {
+        System.out.println("All printNeighbors with nodes :");
         for (Map.Entry<String, Node> entry : allNodes.entrySet()) {
 
             System.out.print(entry.getKey() + ":");
             entry.getValue().print();
             System.out.println();
         }
-
+        System.out.println("");
     }
 
-    public void searchNode()
+    public void printDijkstra()
     {
-
+        System.out.println("Min way :");
+        for (Map.Entry<String, Pair<List<Node>, Integer>> entry : pathsForNodes.entrySet())
+        {
+            System.out.print(entry.getKey() + ": ");
+            List<Node> TempListNode = entry.getValue().getKey();
+            for (int i = 0; i < TempListNode.size(); i++) {
+                System.out.print(TempListNode.get(i).name + ", ");
+            }
+            System.out.println(" W: " + entry.getValue().getValue());
+        }
+        System.out.println("");
     }
 
     public void dijkstra(String startNode, String endNode)
@@ -34,13 +45,22 @@ public class Graph {
         Node currentNode = allNodes.get(startNode);
         if(currentNode != null)
         {
+            // suma wag w aktywnej sciezce
             int waga = 0;
+
+            //jesli sa jeszcze jakies nie odwiedzone wezly to jest na true
             boolean flagCheck = false;
+
+            //flaga do glownej petli
             boolean flagEnd = true;
-            Node lastNode = currentNode;
-            int lastWaga = 0;
+
+            //Najmniejsza wartosc krawedzi sasiada wraz z jego referencja
+            Pair<Integer, Node> minNodeLast= new Pair<Integer, Node>(inf,currentNode);
+
+            //lista aktywnej drogi
             List<Node> tempList = new ArrayList<Node>();
 
+            //wypelnianie mapy drog pustymi wartosciami
             for (Map.Entry<String, Node> entry : allNodes.entrySet())
             {
                 pathsForNodes.put(entry.getKey(), new Pair<>(new ArrayList<Node>(), inf));
@@ -50,12 +70,19 @@ public class Graph {
 
             while(flagEnd)
             {
-                currentNode = lastNode;
+                currentNode = minNodeLast.getValue();
 
                 //odwiedzilem ten wierzcholek
                 tempList.add(currentNode);
                 currentNode.visit = true;
-                waga += lastWaga;
+                if( minNodeLast.getKey() != inf)
+                {
+                    waga += minNodeLast.getKey();
+                }
+
+                //reset current waga
+                minNodeLast = new Pair<Integer, Node>(999,minNodeLast.getValue());
+
                 for (Map.Entry<String,  Pair<Node,Integer >> entry : currentNode.mapNeighbors.entrySet())
                 {
                     if(entry.getValue().getKey() != null)
@@ -64,22 +91,28 @@ public class Graph {
                         {
                             if(inf == pathsForNodes.get(entry.getKey()).getValue())
                             {
-                                //dodaje do listy nowy wieszcholek
+                                //Tworze copie tablicy aktywnej drogi.
                                 List<Node> copy = new ArrayList<>(tempList);
-                                lastWaga = entry.getValue().getValue();
+                                //dodaje do niej aktywny wezel
                                 copy.add(entry.getValue().getKey());
+                                int lastWaga = entry.getValue().getValue();
+
+                                //dodaje nowa droge wraz z waga do wieszcholka w mapie
                                 pathsForNodes.put(entry.getKey(), new Pair<>(copy, waga + entry.getValue().getValue()));
 
-                                //zaznaczam go sobie jako ostatnio odwiedzonego
-                                lastNode = entry.getValue().getKey();
+                                //sprawdzam ktory z sasiadow ma najmniejsza wage i go pobieram jesli taki sie pojawi
+                                    if(minNodeLast.getKey() >  lastWaga)
+                                    {
+                                        //zaznaczam go sobie jako nastepnego bo mam najmniejsza wage
+                                        minNodeLast= new Pair<Integer, Node>(entry.getValue().getValue(),entry.getValue().getKey());
+                                    }
 
-                                //contiune main loop
+                                    //jesli znalazl jeszcze jakis nie odwiedzony to nie konicz glownej petli
                                 flagCheck = true;
                             }
                         }
                     }
                 }
-
 
                 if(flagCheck == true)
                 {
@@ -90,59 +123,18 @@ public class Graph {
                     flagEnd = false;
                 }
             }
-
-            //wracam ta sama sciezka co szedlem
-            for(int i=tempList.size()-1;i>0; i--)
-            {
-                currentNode = tempList.get(i);
-                waga = pathsForNodes.get(currentNode.name).waga;
-                for (Map.Entry<String,  Pair<Node,Integer >> entry : currentNode.mapNeighbors.entrySet())
-                {
-                    if((pathsForNodes.get(entry.getKey()).getValue() + currentNode.mapNeighbors.get(entry.getKey()).getValue()) < waga)
-                    {
-                        //dodaje do listy nowy wieszcholek
-                        List<Node> copy = new ArrayList<>(pathsForNodes.get(entry.getKey()).getKey());
-                        copy.add(currentNode);
-                        int newWaga = pathsForNodes.get(entry.getKey()).getValue() + currentNode.mapNeighbors.get(entry.getKey()).getValue();
-                        String nodeTest = entry.getKey();
-
-                        pathsForNodes.put(currentNode.name ,new Pair<>(copy, newWaga));
-                        //zaznaczam go sobie jako ostatnio odwiedzoneo
-                        lastNode = entry.getValue().getKey();
-                        int trappp = 0;
-                    }
-                    if((pathsForNodes.get(currentNode.name).getValue() + currentNode.mapNeighbors.get(entry.getKey()).getValue()) < pathsForNodes.get(entry.getKey()).getValue())
-                    {
-                        //dodaje do listy nowy wieszcholek
-                        List<Node> copy = new ArrayList<>(pathsForNodes.get(currentNode.name).getKey());
-                        copy.add(entry.getValue().getKey());
-                        int newWaga = pathsForNodes.get(currentNode.name).getValue() + currentNode.mapNeighbors.get(entry.getKey()).getValue();
-                        String nodeTest = entry.getKey();
-
-                        pathsForNodes.put(entry.getKey() ,new Pair<>(copy, newWaga));
-                        //zaznaczam go sobie jako ostatnio odwiedzoneo
-                        lastNode = entry.getValue().getKey();
-                        int trappp = 0;
-                    }
-                }
-            }
         }
         else
         {
             System.out.print("Wierzchołek nie istnieje");
         }
 
-        for (Map.Entry<String, Pair<List<Node>, Integer>> entry : pathsForNodes.entrySet())
-        {
-            System.out.print(entry.getKey() + ": ");
-            List<Node> TempListNode = entry.getValue().getKey();
-            for (int i = 0; i < TempListNode.size(); i++) {
-                System.out.print(TempListNode.get(i).name + ", ");
-            }
-            System.out.println(" W: " + entry.getValue().getValue());
+        System.out.println("Min way from " + startNode + " to "+ endNode);
+        List<Node> TempListNode = pathsForNodes.get(endNode).getKey();
+        for (int i = 0; i < TempListNode.size(); i++) {
+            System.out.print(TempListNode.get(i).name + ", ");
         }
-
-
+        System.out.println(" W: " +  pathsForNodes.get(endNode).getValue());
     }
     public void addNode(String startNode, String endNode , Integer waga)
     {
@@ -185,12 +177,14 @@ public class Graph {
             Node tempEnd = allNodes.get(endNode);
             if(tempEnd == null)
             {
+                //jesli nie ma tworze i dodaje
                 Node newEndNode = new Node(endNode,this);
                 allNodes.put(endNode,newEndNode);
                 tempStart.addNeighbor(endNode, waga);
             }
             else
             {
+                //jesli jest poprostu dodaje
                 allNodes.put(endNode,tempEnd);
                 tempStart.addNeighbor(endNode, waga);
             }

@@ -21,6 +21,7 @@ public class Main {
         graph.addNode("School" ,"E" , 4);
 
         graph.dijkstra("HOME","School");
-        //dijkstra.print();
+        //graph.printNeighbors();
+        //graph.printDijkstra();
     }
 }
