@@ -110,6 +110,43 @@ public class Graph {
                                     //jesli znalazl jeszcze jakis nie odwiedzony to nie konicz glownej petli
                                 flagCheck = true;
                             }
+                            else
+                            {
+                                Node checkNode = entry.getValue().getKey();
+                                for (Map.Entry<String,  Pair<Node,Integer >> NeiCheck : checkNode.mapNeighbors.entrySet())
+                                {
+                                    if((pathsForNodes.get(NeiCheck.getKey()).getValue() != inf && checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue() != inf)
+                                    && pathsForNodes.get(checkNode.name).getValue() != inf && checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue() != inf)
+                                    {
+                                        //jezeli moj sasiad ma mniejsza wage od swoich sasiadow to podyfikuje sciezke do niego
+                                        //waga do checkNode
+                                        waga = (pathsForNodes.get(entry.getKey()).getValue());
+                                        int waga_1 = (pathsForNodes.get(NeiCheck.getKey()).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue());
+                                        if(waga_1 < waga)
+                                        {
+                                            //dodaje do listy nowy wieszcholek
+                                            List<Node> copy = new ArrayList<>(pathsForNodes.get(NeiCheck.getKey()).getKey());
+                                            copy.add(checkNode);
+                                            int newWaga = pathsForNodes.get(NeiCheck.getKey()).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue();
+                                            String nodeTest = entry.getKey();
+
+                                            pathsForNodes.put(checkNode.name ,new Pair<>(copy, waga_1));
+                                            //zaznaczam go sobie jako ostatnio odwiedzoneo
+                                            int trappp = 0;
+                                        }
+
+                                        int waga_2 = (pathsForNodes.get(checkNode.name).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue());
+                                        if(waga_2 < pathsForNodes.get(NeiCheck.getKey()).getValue())
+                                        {
+                                            //dodaje do listy nowy wieszcholek
+                                            List<Node> copy = new ArrayList<>(pathsForNodes.get(checkNode.name).getKey());
+                                            copy.add(NeiCheck.getValue().getKey());
+                                            int newWaga = pathsForNodes.get(checkNode.name).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue();
+                                            pathsForNodes.put(NeiCheck.getKey() ,new Pair<>(copy, waga_2));
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -123,6 +160,8 @@ public class Graph {
                     flagEnd = false;
                 }
             }
+
+
         }
         else
         {
