@@ -31,7 +31,7 @@ public class Graph {
         {
             System.out.print(entry.getKey() + ": ");
             List<Node> TempListNode = entry.getValue().getKey();
-            for (int i = 0; i < TempListNode.size(); i++) {
+            for (int i = TempListNode.size()-1; i > 0; i--) {
                 System.out.print(TempListNode.get(i).name + ", ");
             }
             System.out.println(" W: " + entry.getValue().getValue());
@@ -53,22 +53,22 @@ public class Graph {
         Map<String, Node> Q = new HashMap<String, Node>();
 
         //tablice odleglosci oraz wag
-        Map<String, Integer> d = new HashMap<String, Integer>();
-        Map<String, String> p = new HashMap<String, String>();
+        Map<String, String> d = new HashMap<String, String>();
+        Map<String, Integer> p = new HashMap<String, Integer>();
 
         //Najmniejsza wartosc krawedzi sasiada wraz z jego referencja
         Pair<Integer, Node> minNodeLast= new Pair<Integer, Node>(inf,null);
 
-        //wypelnianie kosztow dojscia
+        //wypelnianie kosztow dojscia dla konkretnego wierzcholka
         for (Map.Entry<String, Node> entry : allNodes.entrySet())
         {
-            d.put(entry.getKey(), inf);
+            p.put(entry.getKey(), inf);
         }
 
-        //wypelnianie wierzchoklow
+        //wypelnianie wierzchoklow poprzednikow
         for (Map.Entry<String, Node> entry : allNodes.entrySet())
         {
-            p.put(entry.getKey(), null);
+            d.put(entry.getKey(), null);
         }
 
         //wypelnianie mapy drog pustymi wartosciami
@@ -78,208 +78,124 @@ public class Graph {
         }
 
         Node currentNode = Q.get(startNode);
-        p.put(startNode,startNode);
+        d.put(startNode,startNode);
+        p.put(startNode,0);
         while(Q.size() != 0)
         {
 
             for (Map.Entry<String,  Pair<Node,Integer >> entry : currentNode.mapNeighbors.entrySet())
             {
-                d.put(entry.getKey(),entry.getValue().getValue());
-                p.put(entry.getKey(),currentNode.name);
-                int lastWaga = entry.getValue().getValue();
-                if(minNodeLast.getKey() >  lastWaga)
+                if(currentNode.name == "7")
                 {
-                    //zaznaczam go sobie jako nastepnego bo mam najmniejsza wage
-                    minNodeLast= new Pair<Integer, Node>(entry.getValue().getValue(),entry.getValue().getKey());
+                    int trappp = 0;
                 }
-            }
+                    if(entry.getValue().getKey().visit == false)
+                    {
+                        entry.getValue().getKey().visit = true;
+                        p.put(entry.getKey(),entry.getValue().getValue());
+                        d.put(entry.getKey(),currentNode.name);
+                    }
+                    else
+                    {
+                        //obliczam droge dla aktywnego node
+                        String currentNodeWay =currentNode.name;
+                        int kosztDrogiDoCurrent =0;
+                        while(currentNodeWay != startNode)
+                        {
+                            kosztDrogiDoCurrent+=p.get(currentNodeWay);
+                            currentNodeWay = this.searchWay(currentNodeWay, d);
+                        }
 
+                        //obliczam droge dla aktywnego sasiada node
+                        currentNodeWay =entry.getKey();
+                        int kosztDrogiDoAktywnego =0;
+                        while(currentNodeWay != startNode)
+                        {
+                            kosztDrogiDoAktywnego+=p.get(currentNodeWay);
+                            currentNodeWay = this.searchWay(currentNodeWay, d);
+                        }
+
+                        //sprawdzam czy droga przez aktywny node nie jest bardziej opytmalna od tej ktorej posiada
+                         if(kosztDrogiDoAktywnego > (kosztDrogiDoCurrent + entry.getValue().getValue()))
+                         {
+                             p.put(entry.getKey(),entry.getValue().getValue());
+                             d.put(entry.getKey(),currentNode.name);
+
+                             //dodaje jeszcze raz do listy noda ktory zmienil sciezke zeby sprawdzic tez jego sasiadow
+                             Q.put(entry.getKey(),entry.getValue().getKey());
+                         }
+
+                    }
+                }
 
             Q.remove(currentNode.name);
             currentNode.visit = true;
             S.put(currentNode.name,currentNode);
 
+            currentNode = minNodeLast.getValue();
             int minValue = inf;
-            for (Map.Entry<String, Integer> entry : d.entrySet())
+            for (Map.Entry<String, Integer> entry : p.entrySet())
             {
-                if(minValue > entry.getValue())
+                if(Q.get(entry.getKey()) != null)
                 {
-                    if(allNodes.get(entry.getKey()).visit == false)
+                    if(minValue > entry.getValue() && ( entry.getValue()!=0))
                     {
+                        minValue = entry.getValue();
                         currentNode = allNodes.get(entry.getKey());
                     }
                 }
             }
         }
 
-        for (Map.Entry<String, String> entry : p.entrySet())
-        {
-            System.out.print(entry.getKey() + " |");
-        }
+        //Print
         System.out.println("");
-        for (Map.Entry<String, String> entry : p.entrySet())
+        ///////////////////////BOARD
+        for(int i=0;i<(S.size()*3)+4;i++)
         {
-            System.out.print(entry.getValue() + " |");
+            System.out.print("#");
         }
-        System.out.println("");
 
-        for (Map.Entry<String, String> entry : p.entrySet())
-        {
-            String currentNodeWay =entry.getKey();
-            System.out.print(currentNodeWay + ": ");
-            while(currentNodeWay != startNode)
+            System.out.println("");
+            System.out.print("    ");
+            for (Map.Entry<String, String> entry : d.entrySet())
             {
-                currentNodeWay = this.searchWay(entry.getKey(), p);
-                System.out.print(currentNodeWay + ", ");
-
+                System.out.print(entry.getKey() + " |");
             }
             System.out.println("");
-            //entry.getKey()
-        }
+            System.out.print("d[]:");
+            for (Map.Entry<String, String> entry : d.entrySet())
+            {
+                System.out.print(entry.getValue() + " |");
+            }
+            System.out.println("");
+            System.out.print("p[]:");
+            for (Map.Entry<String, Integer> entry : p.entrySet())
+            {
+                System.out.print(entry.getValue() + " |");
+            }
+            ///////////////////////BOARD
+            System.out.println("");
+            for(int i=0;i<(S.size()*3)+4;i++)
+            {
+                System.out.print("#");
+            }
 
-//        Integer inf = (int)Double.POSITIVE_INFINITY;
-//        Node currentNode = allNodes.get(startNode);
-//        if(currentNode != null)
-//        {
-//            // suma wag w aktywnej sciezce
-//            int waga = 0;
-//
-//            //jesli sa jeszcze jakies nie odwiedzone wezly to jest na true
-//            boolean flagCheck = false;
-//
-//            //flaga do glownej petli
-//            boolean flagEnd = true;
-//
-//            //Najmniejsza wartosc krawedzi sasiada wraz z jego referencja
-//            Pair<Integer, Node> minNodeLast= new Pair<Integer, Node>(inf,currentNode);
-//
-//            //lista aktywnej drogi
-//            List<Node> tempList = new ArrayList<Node>();
-//
-//            //wypelnianie mapy drog pustymi wartosciami
-//            for (Map.Entry<String, Node> entry : allNodes.entrySet())
-//            {
-//                pathsForNodes.put(entry.getKey(), new Pair<>(new ArrayList<Node>(), inf));
-//            }
-//            pathsForNodes.put(startNode, new Pair<>(new ArrayList<Node>(), 0));
-//
-//
-//            while(flagEnd)
-//            {
-//                currentNode = minNodeLast.getValue();
-//
-//                //odwiedzilem ten wierzcholek
-//                tempList.add(currentNode);
-//                currentNode.visit = true;
-//                if( minNodeLast.getKey() != inf)
-//                {
-//                    waga += minNodeLast.getKey();
-//                }
-//
-//                //reset current waga
-//                minNodeLast = new Pair<Integer, Node>(999,minNodeLast.getValue());
-//
-//                for (Map.Entry<String,  Pair<Node,Integer >> entry : currentNode.mapNeighbors.entrySet())
-//                {
-//                    if(entry.getValue().getKey() != null)
-//                    {
-//                        if(entry.getValue().getKey().visit == false)
-//                        {
-//                            if(inf == pathsForNodes.get(entry.getKey()).getValue())
-//                            {
-//                                //Tworze copie tablicy aktywnej drogi.
-//                                List<Node> copy = new ArrayList<>(tempList);
-//                                //dodaje do niej aktywny wezel
-//                                copy.add(entry.getValue().getKey());
-//                                int lastWaga = entry.getValue().getValue();
-//
-//                                //dodaje nowa droge wraz z waga do wieszcholka w mapie
-//                                pathsForNodes.put(entry.getKey(), new Pair<>(copy, waga + entry.getValue().getValue()));
-//
-//                                //sprawdzam ktory z sasiadow ma najmniejsza wage i go pobieram jesli taki sie pojawi
-//                                    if(minNodeLast.getKey() >  lastWaga)
-//                                    {
-//                                        //zaznaczam go sobie jako nastepnego bo mam najmniejsza wage
-//                                        minNodeLast= new Pair<Integer, Node>(entry.getValue().getValue(),entry.getValue().getKey());
-//                                    }
-//
-//                                    //jesli znalazl jeszcze jakis nie odwiedzony to nie konicz glownej petli
-//                                flagCheck = true;
-//                            }
-//                            else
-//                            {
-//                                Node checkNode = entry.getValue().getKey();
-//                                for (Map.Entry<String,  Pair<Node,Integer >> NeiCheck : checkNode.mapNeighbors.entrySet())
-//                                {
-//                                    if((pathsForNodes.get(NeiCheck.getKey()).getValue() != inf && checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue() != inf)
-//                                    && pathsForNodes.get(checkNode.name).getValue() != inf && checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue() != inf)
-//                                    {
-//                                        //jezeli moj sasiad ma mniejsza wage od swoich sasiadow to podyfikuje sciezke do niego
-//                                        //waga do checkNode
-//                                        waga = (pathsForNodes.get(entry.getKey()).getValue());
-//                                        int waga_1 = (pathsForNodes.get(NeiCheck.getKey()).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue());
-//                                        if(waga_1 < waga)
-//                                        {
-//                                            //dodaje do listy nowy wieszcholek
-//                                            List<Node> copy = new ArrayList<>(pathsForNodes.get(NeiCheck.getKey()).getKey());
-//                                            copy.add(checkNode);
-//                                            int newWaga = pathsForNodes.get(NeiCheck.getKey()).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue();
-//                                            String nodeTest = entry.getKey();
-//
-//                                            pathsForNodes.put(checkNode.name ,new Pair<>(copy, waga_1));
-//                                            //zaznaczam go sobie jako ostatnio odwiedzoneo
-//                                            int trappp = 0;
-//
-//
-//                                        }
-//
-//                                        int waga_2 = (pathsForNodes.get(checkNode.name).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue());
-//                                        if(waga_2 < pathsForNodes.get(NeiCheck.getKey()).getValue())
-//                                        {
-//                                            //dodaje do listy nowy wieszcholek
-//                                            List<Node> copy = new ArrayList<>(pathsForNodes.get(checkNode.name).getKey());
-//                                            copy.add(NeiCheck.getValue().getKey());
-//                                            int newWaga = pathsForNodes.get(checkNode.name).getValue() + checkNode.mapNeighbors.get(NeiCheck.getKey()).getValue();
-//                                            pathsForNodes.put(NeiCheck.getKey() ,new Pair<>(copy, waga_2));
-//                                        }
-//                                    }
-//                                    int lastWaga = entry.getValue().getValue();
-//                                    //sprawdzam ktory z sasiadow ma najmniejsza wage i go pobieram jesli taki sie pojawi
-//                                    if(minNodeLast.getKey() >  lastWaga)
-//                                    {
-//                                        //zaznaczam go sobie jako nastepnego bo mam najmniejsza wage
-//                                        minNodeLast= new Pair<Integer, Node>(entry.getValue().getValue(),entry.getValue().getKey());
-//                                    }
-//                                    flagCheck = true;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                if(flagCheck == true)
-//                {
-//                    flagCheck = false;
-//                }
-//                else
-//                {
-//                    flagEnd = false;
-//                }
-//            }
-//
-//
-//        }
-//        else
-//        {
-//            System.out.print("Wierzchołek nie istnieje");
-//        }
-//
-//        System.out.println("Min way from " + startNode + " to "+ endNode);
-//        List<Node> TempListNode = pathsForNodes.get(endNode).getKey();
-//        for (int i = 0; i < TempListNode.size(); i++) {
-//            System.out.print(TempListNode.get(i).name + ", ");
-//        }
-//        System.out.println(" W: " +  pathsForNodes.get(endNode).getValue());
+        System.out.println("");
+        //Wypelniam drogami moja mape pod indexy nazw wezlow
+        for (Map.Entry<String, String> entry : d.entrySet())
+        {
+            String currentNodeWay =entry.getKey();
+            List<Node> tempList = new ArrayList<Node>();
+            int wagaPolicz =0;
+            while(currentNodeWay != startNode)
+            {
+                tempList.add(allNodes.get(currentNodeWay));
+                wagaPolicz+=p.get(currentNodeWay);
+                currentNodeWay = this.searchWay(currentNodeWay, d);
+            }
+            tempList.add(allNodes.get(startNode));
+            pathsForNodes.put(entry.getKey(), new Pair<>(tempList, wagaPolicz));
+        }
     }
     public void addNode(String startNode, String endNode , Integer waga)
     {
